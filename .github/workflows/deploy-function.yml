@@ -23,12 +23,11 @@ jobs:
         with:
           python-version: '3.14'
 
-      - name: Install Dependencies
+      - name: Install dependencies directly into site-packages target
         run: |
-          python -m venv venv
-          source venv/bin/activate
-          pip install --upgrade pip
-          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+          python -m pip install --upgrade pip
+          # Force pip to place modules right where Azure Function looks for them
+          pip install --target="./.python_packages/lib/site-packages" -r requirements.txt
 
       - name: Azure Login (OIDC)
         uses: azure/login@v2
@@ -42,5 +41,6 @@ jobs:
         with:
           app-name: ${{ secrets.AZURE_FUNCTIONAPP_NAME }}
           package: '.'
-          scm-do-build-during-deployment: true
-          enable-oryx-build: true
+          # Disable remote build since we packaged site-packages locally
+          scm-do-build-during-deployment: false
+          enable-oryx-build: false
