@@ -3,12 +3,12 @@ name: Deploy Azure Function App
 on:
   push:
     branches:
-      - main
-  workflow_dispatch:
+      - dev-taylor  # <--- Triggers ONLY on pushes/merges to dev-taylor
+  workflow_dispatch: # Keeps manual trigger available from GitHub UI
 
 permissions:
-  id-token: write  # Required for requesting the OIDC token
-  contents: read   # Required to checkout repository code
+  id-token: write  # Required for OIDC authentication
+  contents: read   # Required to checkout repo code
 
 jobs:
   build-and-deploy:
@@ -23,10 +23,9 @@ jobs:
         with:
           python-version: '3.14'
 
-      - name: Install dependencies directly into site-packages target
+      - name: Install Dependencies into Target Directory
         run: |
           python -m pip install --upgrade pip
-          # Force pip to place modules right where Azure Function looks for them
           pip install --target="./.python_packages/lib/site-packages" -r requirements.txt
 
       - name: Azure Login (OIDC)
@@ -41,6 +40,5 @@ jobs:
         with:
           app-name: ${{ secrets.AZURE_FUNCTIONAPP_NAME }}
           package: '.'
-          # Disable remote build since we packaged site-packages locally
           scm-do-build-during-deployment: false
           enable-oryx-build: false
